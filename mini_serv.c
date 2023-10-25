@@ -7,7 +7,7 @@
 #include <sys/select.h>
 #include <stdlib.h>
 #include <stdio.h>
-int MAX_CLIENT = 2000;
+int MAX_CLIENTS = 2000;
 int clients[2000] = {-1};
 char *messages[2000];
 fd_set fd_pool, fd_pool_write, fd_pool_read;
@@ -18,7 +18,7 @@ void ft_error()
 }
 void send_message(int fd, char *str)
 {
-	for(int i = 0; i < MAX_CLIENT;i++)
+	for(int i = 0; i < MAX_CLIENTS;i++)
 		if(clients[i] != -1 && i != fd && FD_ISSET(i,&fd_pool_write))
 			send(i,str,strlen(str),0);
 }

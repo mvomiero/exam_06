@@ -9,12 +9,12 @@
 #include <stdio.h>
 
 enum {
-    MAX_CLIENT = 2000,
+    MAX_CLIENTS = 128,
 	MAX_BUFFER = 4094
 };
 
-int clients[MAX_CLIENT] = {-1};
-char *messages[MAX_CLIENT];
+int clients[MAX_CLIENTS] = {-1};
+char *messages[MAX_CLIENTS];
 
 fd_set fd_pool, fd_pool_write, fd_pool_read;
 
@@ -26,7 +26,7 @@ void ft_error()
 
 void send_message(int fd, char *str)
 {
-	for(int i = 0; i < MAX_CLIENT;i++)
+	for(int i = 0; i < MAX_CLIENTS;i++)
 		if(clients[i] != -1 && i != fd && FD_ISSET(i,&fd_pool_write))
 			send(i,str,strlen(str),0);
 }
@@ -97,7 +97,7 @@ int main(int ac , char **av) {
 		// Binding newly created socket to given IP and verification and listen
 		if ((bind(sockfd, (const struct sockaddr *)&servaddr, sizeof(servaddr))) != 0) 
 			ft_error();
-		if (listen(sockfd, 128) != 0) ft_error();
+		if (listen(sockfd, MAX_CLIENTS) != 0) ft_error();
 
 		// init fd_pool
 		FD_SET(sockfd,&fd_pool);
