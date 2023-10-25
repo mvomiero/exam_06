@@ -25,7 +25,7 @@ void ft_error()
 	exit(1);
 }
 
-void ft_send(int fd, char *str)
+void send_message(int fd, char *str)
 {
 	for(int i = 0; i < MAX_CLIENT;i++)
 		if(clients[i] != -1 && i != fd && FD_ISSET(i,&fd_pool_write))
@@ -127,14 +127,10 @@ int main(int ac , char **av) {
 						// init client and message
 						clients[newClient] = index++; // storing the index of the client
 
-						// init message string
-						//messages[newClient] = malloc(2);
-						//messages[newClient][0] = 0;
-
 						// communicate arrival to all clients
-						char str[MSG_BUFFER];
+						char *str = NULL;
 						sprintf(str,"server: client %d just arrived\n",index-1);
-						ft_send(newClient,str);
+						send_message(newClient,str);
 					}
 					else // client socket, reads and sends messages
 					{
@@ -143,9 +139,9 @@ int main(int ac , char **av) {
 						if(bytes_read <= 0) // client disconnected
 						{
 							FD_CLR(fd,&fd_pool);
-							char str[MSG_BUFFER];
+							char *str = NULL;
 							sprintf(str,"server: client %d just left\n",clients[fd]);
-							ft_send(fd,str);
+							send_message(fd,str);
 							clients[fd] = -1; // maybe would work even without this
 							free(messages[fd]);
 							close(fd);
@@ -157,9 +153,9 @@ int main(int ac , char **av) {
 							char *tmp;
 							while(extract_message(&messages[fd],&tmp)) // extract messages from buffer, separated from newlines
 							{
-								char str[strlen(tmp) + MSG_BUFFER];
+								char *str = NULL;
 								sprintf(str,"client %d: %s",clients[fd],tmp);
-								ft_send(fd,str);
+								send_message(fd,str);
 								free(tmp);
 							}
 						}

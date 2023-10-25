@@ -16,7 +16,7 @@ void ft_error()
 	write(2,"Fatal error\n",strlen("Fatal error\n"));
 	exit(1);
 }
-void ft_send(int fd, char *str)
+void send_message(int fd, char *str)
 {
 	for(int i = 0; i < MAX_CLIENT;i++)
 		if(clients[i] != -1 && i != fd && FD_ISSET(i,&fd_pool_write))
@@ -106,7 +106,7 @@ int main(int ac , char **av) {
 						if(newClient > max) max = newClient;
 						char str[100];
 						sprintf(str,"server: client %d just arrived\n",index-1);
-						ft_send(newClient,str);
+						send_message(newClient,str);
 					}
 					else
 					{
@@ -117,7 +117,7 @@ int main(int ac , char **av) {
 							FD_CLR(fd,&fd_pool);
 							char str[100];
 							sprintf(str,"server: client %d just left\n",clients[fd]);
-							ft_send(fd,str);
+							send_message(fd,str);
 							clients[fd] = -1;
 							close(fd);
  						}
@@ -130,7 +130,7 @@ int main(int ac , char **av) {
 							{
 								char str[strlen(tmp) + 100];
 								sprintf(str,"client %d: %s",clients[fd],tmp);
-								ft_send(fd,str);
+								send_message(fd,str);
 							}
 						}
 					}
