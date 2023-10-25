@@ -10,8 +10,7 @@
 
 enum {
     MAX_CLIENT = 2000,
-	MAX_BUFFER = 4094,
-	MSG_BUFFER = 100
+	MAX_BUFFER = 4094
 };
 
 int clients[MAX_CLIENT] = {-1};
