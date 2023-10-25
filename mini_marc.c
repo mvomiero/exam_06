@@ -10,10 +10,11 @@
 
 enum {
     MAX_CLIENTS = 128,
-	MAX_BUFFER = 4094
+	MAX_BUFFER = 4094,
+	MSG_BUFFER = 100
 };
 
-int clients[MAX_CLIENTS] = {-1};
+int clients_indexes[MAX_CLIENTS] = {-1};
 char *messages[MAX_CLIENTS];
 
 fd_set fd_pool, fd_pool_write, fd_pool_read;
@@ -27,7 +28,7 @@ void ft_error()
 void send_message(int fd, char *str)
 {
 	for(int i = 0; i < MAX_CLIENTS;i++)
-		if(clients[i] != -1 && i != fd && FD_ISSET(i,&fd_pool_write))
+		if(clients_indexes[i] != -1 && i != fd && FD_ISSET(i,&fd_pool_write))
 			send(i,str,strlen(str),0);
 }
 
@@ -101,7 +102,7 @@ int main(int ac , char **av) {
 
 		// init fd_pool
 		FD_SET(sockfd,&fd_pool);
-		int max = sockfd;
+		int max_fd = sockfd;
 		int index = 0;
 
 		// main loop
@@ -109,39 +110,40 @@ int main(int ac , char **av) {
 		{
 			fd_pool_read = fd_pool_write = fd_pool; // copy fd_pool
 
-			if(select(max+1,&fd_pool_read,&fd_pool_write,NULL,NULL) < 0) continue;
+			if(select(max_fd+1,&fd_pool_read,&fd_pool_write,NULL,NULL) < 0) continue;
 
-			for(int fd = 0; fd <= max;fd++)
+			for(int fd = 0; fd <= max_fd;fd++)
 			{
 				if(FD_ISSET(fd,&fd_pool_read))
 				{
 					if (fd == sockfd) // server socket, listens for new connections
 					{
 						// accept new connection and adding to fd_pool
-						int newClient = accept(sockfd,NULL,NULL); // accept new connection
-						if (newClient <= 0) continue;
-						FD_SET(newClient,&fd_pool);
-						if(newClient > max) max = newClient; // update max
+						int new_client_fd = accept(sockfd,NULL,NULL); // accept new connection
+						if (new_client_fd <= 0) continue;
+						FD_SET(new_client_fd,&fd_pool);
+						if(new_client_fd > max_fd) max_fd = new_client_fd; // update max
 
 						// init client and message
-						clients[newClient] = index++; // storing the index of the client
+						clients_indexes[new_client_fd] = index++; // storing the index of the client
 
 						// communicate arrival to all clients
-						char *str = NULL;
+						char str[MSG_BUFFER];
 						sprintf(str,"server: client %d just arrived\n",index-1);
-						send_message(newClient,str);
+						send_message(new_client_fd,str);
 					}
 					else // client socket, reads and sends messages
 					{
 						char buffer[MAX_BUFFER + 1];
 						int bytes_read = recv(fd,buffer,MAX_BUFFER,0); // read from client
+
 						if(bytes_read <= 0) // client disconnected
 						{
 							FD_CLR(fd,&fd_pool);
-							char *str = NULL;
-							sprintf(str,"server: client %d just left\n",clients[fd]);
+							char str[MSG_BUFFER];
+							sprintf(str,"server: client %d just left\n",clients_indexes[fd]);
 							send_message(fd,str);
-							clients[fd] = -1; // maybe would work even without this
+							clients_indexes[fd] = -1; // maybe would work even without this
 							free(messages[fd]);
 							close(fd);
  						}
@@ -152,8 +154,8 @@ int main(int ac , char **av) {
 							char *tmp;
 							while(extract_message(&messages[fd],&tmp)) // extract messages from buffer, separated from newlines
 							{
-								char *str = NULL;
-								sprintf(str,"client %d: %s",clients[fd],tmp);
+								char str[strlen(tmp) + MSG_BUFFER];
+								sprintf(str,"client %d: %s",clients_indexes[fd],tmp);
 								send_message(fd,str);
 								free(tmp);
 							}
@@ -169,3 +171,55 @@ int main(int ac , char **av) {
 		exit(1);
 	}
 }
+
+// int clients_indexes[]
+// char *messages[]
+// fd_set fd_pool
+
+// if ac != 2 -> error
+
+// int sockfd = socket()
+// bind()
+// listen()
+
+// FD_SET(sockfd,fd_pool)
+// int max_fd = sockfd
+// int index = 0
+
+// while(1)
+
+// fd_pool_read = fd_pool_write = fd_pool
+// select()
+
+// for loop fd
+
+// server socket
+	// accept()
+	// FD_SET(new_client_fd,fd_pool)
+	// clients_indexes[new_client_fd] = index++
+	// update max_fd
+
+	// send message
+
+// client socket
+
+	// char buffer[]
+	// recv()
+
+	// if bytes_read <= 0
+
+		// FD_CLR(fd,fd_pool)
+		// clients_indexes[fd] = -1
+		// close(fd)
+
+	// else
+	
+		// messages[fd] = str_join(messages[fd],buffer)
+		// while(extract_message(&messages[fd],&tmp))
+			// send_message(fd,tmp)
+			// free(tmp)
+
+
+
+
+
