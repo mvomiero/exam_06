@@ -145,7 +145,7 @@ int main(int ac , char **av) {
 							free(messages[fd]);
 							close(fd);
  						}
-						else
+						else // client sent a message, sharing it with all clients
 						{
 							buffer[bytes_read] = 0;
 							messages[fd] = str_join(messages[fd],buffer);
